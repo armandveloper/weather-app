@@ -1,0 +1,23 @@
+{
+  "name": "weather-app-v2",
+  "version": "1.0.0",
+  "description": "A basic weather app, you can: * Get the current weather based on your location in the initial load * Get the weather for a location *",
+  "main": "index.js",
+  "scripts": {
+    "deploy": "gh-pages -d dist"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/armcruz/weather-app.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/armcruz/weather-app/issues"
+  },
+  "homepage": "https://armcruz.github.io/weather-app/",
+  "devDependencies": {
+    "gh-pages": "^3.1.0"
+  }
+}

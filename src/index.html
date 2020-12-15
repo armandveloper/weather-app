@@ -46,22 +46,25 @@
 			}
 			.alert {
 				background-color: rgb(47, 47, 47);
-				max-width: 28rem;
-				padding: 2.5rem;
-				border-radius: 1rem;
+				border-radius: 0 6rem 0 6rem;
+				max-width: 36rem;
+				padding: 5rem 3rem;
 			}
 			.alert p {
+				line-height: 1.5;
 				margin-top: 0;
 			}
 			.btn--access {
-				background-color: var(--color-water);
+				background-color: #3423a6;
 				border: none;
-				border-radius: 2px;
+				border-radius: 0.4rem;
 				color: #fff;
 				cursor: pointer;
-				display: inline;
+				display: block;
+				font-size: 1.6rem;
 				margin: 0;
-				padding: 0.6rem 1rem;
+				margin-left: auto;
+				padding: 0.8rem 1.2rem;
 			}
 			@keyframes spin {
 				from {
@@ -84,7 +87,7 @@
 		<div class="overlay" id="loader">
 			<div class="loader"></div>
 		</div>
-		<main class="app">
+		<main class="app" id="app">
 			<img
 				src=""
 				alt="Weather cover"
@@ -145,6 +148,6 @@
 				</section>
 			</aside>
 		</main>
-		<script src="js/app.js"></script>
+		<script async src="js/app.js"></script>
 	</body>
 </html>

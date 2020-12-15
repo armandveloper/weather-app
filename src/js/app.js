@@ -1,6 +1,6 @@
-const $form = document.getElementById('form'),
+const $app = document.getElementById('app'),
+	$form = document.getElementById('form'),
 	$input = document.getElementById('input-place'),
-	$weatherImg = document.getElementById('weather-img'),
 	$weatherIcon = document.getElementById('weather-icon'),
 	$weatherDescription = document.getElementById('weather-description'),
 	$weatherPlace = document.getElementById('weather-place'),
@@ -10,6 +10,9 @@ const $form = document.getElementById('form'),
 	$weatherHumidity = document.getElementById('weather-humidity'),
 	$weatherWind = document.getElementById('weather-wind'),
 	$loader = document.getElementById('loader');
+
+let $weatherImg = document.getElementById('weather-img');
+
 const key = '8c9fcb7a328362b6325eef63a706146c';
 
 const conditionCodes = {
@@ -68,14 +71,50 @@ const days = [
 	'Saturday',
 ];
 
-const renderResult = (result) => {
-	console.log(result);
+const permissionKey = 'allowLocation';
+
+const showToast = (text) => {
+	const $toast = document.createElement('div');
+	$toast.className = 'toast';
+	$toast.innerText = text;
+	document.body.appendChild($toast);
+	setTimeout(() => {
+		$toast.classList.add('fadeOutDown');
+		setTimeout(() => {
+			$toast.remove();
+		}, 400);
+	}, 2000);
+};
+
+const renderResult = (result, first) => {
+	if (result.cod === '404') {
+		return showToast('No results found');
+	}
 	const { weather, main, name, clouds, wind } = result;
 	let code = weather[0].main;
 	code = code === 'Mist' ? 'Fog' : code;
 	const { cover, icon } = conditionCodes[code];
-	$weatherImg.src = cover;
+	if (first) {
+		$weatherImg.src = cover;
+	} else {
+		const newImg = new Image(innerWidth, innerHeight);
+		newImg.className = 'weather__img weather__img--in';
+		newImg.alt = 'Weather cover';
+		newImg.src = cover;
+		newImg.id = 'weather-img';
+		newImg.onload = () => {
+			$app.insertAdjacentElement('afterbegin', newImg);
+			$weatherImg.classList.add('weather__img--out');
+			setTimeout(() => {
+				$weatherImg.remove();
+				$weatherImg = newImg;
+				$weatherImg.classList.remove('weather__img--in');
+			}, 400);
+		};
+	}
+
 	$weatherIcon.src = icon;
+
 	$weatherDescription.innerText = weather[0].main;
 	$weatherTemp.innerHTML = `
     ${main.temp}<sup class="weather__grades">°</sup>
@@ -106,7 +145,7 @@ const getWeatherByCoords = async (lat, lon) => {
 			`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${key}`
 		);
 		const data = await response.json();
-		renderResult(data);
+		renderResult(data, true);
 		$loader.remove();
 	} catch (err) {
 		console.log(err);
@@ -117,6 +156,7 @@ const handleSubmit = (e) => {
 	e.preventDefault();
 	const place = $input.value.trim();
 	if (!place) {
+		showToast('Please enter a location');
 		return;
 	}
 	getWeather(place);
@@ -138,40 +178,64 @@ const generateDateTime = () => {
 };
 
 const getPosition = ($alert) => {
-	let alert;
-	if ($alert) {
-		alert = document.getElementById('alert');
-		alert.firstElementChild.remove();
-	}
 	navigator.geolocation.getCurrentPosition(
 		({ coords }) => {
-			if (alert) {
-				alert.remove();
+			if ($alert) {
+				$alert.remove();
 			}
 			getWeatherByCoords(coords.latitude, coords.longitude);
-			localStorage.setItem('allowLocation', true);
 		},
-		(err) => console.log(err)
+		(err) => {
+			$alert.innerHTML = `
+        <div class="alert">
+          <p>Permission was denied, please configure the permission in your browser</p>
+        </div>
+      `;
+		}
 	);
 };
 
+const updatePermissions = ({ target }) => {
+	localStorage.setItem(permissionKey, target.state === 'granted');
+};
+
 const requestPositionAccess = () => {
+	const $alert = document.getElementById('alert');
+	$alert.firstElementChild.remove();
+	navigator.permissions
+		.query({ name: 'geolocation' })
+		.then(function (result) {
+			result.onchange = updatePermissions;
+			if (result.state === 'granted') {
+				getPosition($alert);
+			} else if (result.state === 'denied') {
+				$alert.innerHTML = $alert.innerHTML = `
+        <div class="alert">
+        <p>Permission was denied, please configure the permission in your browser</p>
+        </div>
+      `;
+			} else {
+				getPosition($alert);
+			}
+		});
+};
+
+const showAlert = () => {
 	const $alert = document.createElement('div');
 	$alert.className = 'overlay';
 	$alert.id = 'alert';
 	$alert.innerHTML = `
-    <div class="alert">
-    <p>For use the app, please allow the access of your location. This is neccesary for give you a initial weather info</p>
-      <button class="btn--access" onclick="getPosition(true)">Allow</button>
-    </div>
-  `;
+  <div class="alert">
+  <p>Please, provide access of your location for use the app.</p>
+    <button class="btn--access" onclick="requestPositionAccess()">Allow</button>
+  </div>
+`;
 	document.body.appendChild($alert);
 };
 
-let allowLocation = JSON.parse(localStorage.getItem('allowLocation')) || false;
-console.log(allowLocation);
+const allowLocation = JSON.parse(localStorage.getItem(permissionKey)) || false;
 if (!allowLocation) {
-	requestPositionAccess();
+	showAlert();
 } else {
 	getPosition();
 }
